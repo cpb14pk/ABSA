@@ -1,0 +1,101 @@
+﻿to set_account_execution_PK ai_data -- initial - on ai - which takes a parameter of Account number - global from csv
+	set global account_number_pk to ai_data
+end set_account_execution_PK
+
+to set_mandatory_fields mandatory_fields --SET MANDATORY FIELDS... FROM DAI 
+	split mandatory_fields by "|" --> mandatory list needs to be pipe delimited within DAI .. 
+	set global mandatory_fields to mandatory_fields
+end set_mandatory_fields
+
+to set_sub_flow sub_flow_variable -- UPDATE SUB FLOW
+	set global sub_flow to sub_flow_variable
+	log global sub_flow
+end set_sub_flow
+
+to set_execution_data
+	set data_rows to global loaded_sourcedata.(global parent_flow).(global sub_flow).(global account_number_pk)
+	log data_rows
+	set global execution_data to  data_rows.(item random(1, number of keys in data_rows) of keys(data_rows))
+	log global execution_data
+end set_execution_data
+
+to set_parent_flow parent --UPDATE PARENT FLOW
+	set global parent_flow to parent
+end set_parent_flow
+
+to next_validate_business_rules --NEXT VALIDATE BUSINESS ...  -- VALIDATE TRACKER MATCHES ...
+	if False is not in (each item in global mandatory_fields is in global validation_tracker.(global parent_flow).(global sub_flow))
+		return True
+	else
+		return False
+	end if	
+end next_validate_business_rules
+
+to add_field_tracker field --ADD FIELD TO VALDIATION
+	insert field into global validation_tracker.(global parent_flow).(global sub_flow)
+	log global validation_tracker.(global parent_flow).(global sub_flow)
+	log global validation_trackerset
+end add_field_tracker
+
+to clear_field_tracker --CLEAR TRACKER ... ONLY ON DASHBOARD
+	set global validation_tracker to empty
+end clear_field_tracker
+
+to transition_flow_validation action --Transition flow between mobile screens 
+	"Generic_functions/mobile_navigation".navigate (action)
+	if next_validate_business_rules() is True
+		return true
+	else
+		waitfor 10, {text:"made no changes"},{text:"Error"},{text:"Please enter"},{text:"Please acknowledge"},{text:"Enter amount to pay"},{text:"Please"} ,{text:"cannot be more"},{text:"Select"}-- GENERIC LOGIC ... 
+		if FoundImageInfo().text is "Error"
+			tap text:"OK"
+			wait 1
+		end if
+		return false
+	end if
+end transition_flow_validation
+
+to tapNext
+	transition_flow_validation("Next")
+	return the result
+end tapNext
+
+to tapContinue
+	transition_flow_validation("Continue")
+	return the result
+end tapContinue
+
+to tapExchangeRate
+	transition_flow_validation("Calculate exchange rate")
+	return the result
+end tapExchangeRate
+
+to tapSave
+	transition_flow_validation("Save")
+	return the result
+end clickSave
+
+To ValidateMessage Label
+	If ImageFound(1,text:Label,caseSensitive:Yes ,IgnoreNewLines: On, ignoreSpaces: On, contrast:"On", contrastColor:"#ef2b56")
+		LogSuccess Label
+	Else
+		LogError "Expected message not found"
+	End If
+End ValidateMessage
+
+to verifyList navigationElement, listElement
+	"Generic_functions/mobile_navigation".navigate(navigationElement) --Taps on element 
+	"Generic_functions/mobile_scroll".Delete_Capture 
+	set the defaultQuoteFormat to "Standard"
+	put (listElement)  into itemsList --Puts list from datasheet into list
+	set the TextStyle to {contrast:"On", contrastColor:"#000000", contrastTolerance:"45", TextDifference:"1"}
+	repeat with each item listItem of itemsList 
+		if ImageFound(1,text:listItem,caseSensitive:Yes ,IgnoreNewLines: On, ignoreSpaces: On) -- Looks for each item in the list
+			Log "Item Found"
+		else
+			"Generic_functions/mobile_scroll"._main(listItem)
+		end if
+	end repeat
+	set the TextStyle to "Default"
+	"Common_fields/fields".back --Navigates to the previous screen
+end verifyList

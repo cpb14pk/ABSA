@@ -1,0 +1,44 @@
+﻿
+to navigate navigation_element, expectation_element
+	Set the ScriptLogging to Silent
+	--"Generic_functions/mobile_input".hideKeyboard
+	wait 0.5
+	if navigation_element is not empty		
+		try 
+			tap image:navigation_element
+		catch 
+			"Generic_functions/mobile_scroll"._main(navigation_element)
+			tap global webElementCenter
+		end try 
+		wait 0.5 -- Allows Animation to playout	
+	end if 
+	
+	if expectation_element not empty 	--- TRANSITION .... 
+		Set the ScriptLogging to Silent
+		--"Generic_functions/mobile_scroll".Clear_Captures
+		try 
+			waitfor 15, image:expectation_element
+		catch 
+			waitfor 30, text:expectation_element
+		end try 
+		wait 0.5  -- Allows Animation to playout			
+	end if
+	Set the ScriptLogging to On
+end navigate
+
+to navigate_gatekeeper navigation_element,expectation_element
+	log global parent_flow
+	log global sub_flow
+	log global account_number_pk
+	
+	set checker to ( (global loaded_sourcedata).(global parent_flow).(global sub_flow).(global account_number_pk) contains <global sub_flow> considering case)
+	
+	log checker
+	if checker equals True
+		navigate (navigation_element), (expectation_element)
+		log checker
+		return checker
+	else
+		return checker      
+	end if
+end navigate_gatekeeper

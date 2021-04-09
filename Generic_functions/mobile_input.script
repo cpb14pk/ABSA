@@ -1,0 +1,182 @@
+﻿to text_entry label, input -- TEXT ENTRY 
+	--hideKeyboard
+	set the NextKeyDelay to 0.06
+	clearKeysFunction label
+	typetext input
+	wait 0.5 
+	keyboard_close
+	wait 1
+end text_entry
+
+to clearKeysFunction obj
+	"Generic_functions/mobile_scroll"._main(obj)
+	put global webElementCenter into elementLocation
+	
+	put  [0, the height of RemoteScreenSize()*0.024] into offset
+	put elementLocation + offset into moveToLocation	
+	
+	Click moveToLocation
+	ClearKeys (first item of global webElement)
+end clearKeysFunction
+
+
+to text_entry_non_clear label,input -- TEXT ENTRY 
+	hideKeyboard
+	"Generic_functions/mobile_scroll"._main(obj)
+	
+	put global webElementRectangle into elementLocation
+	
+	put  [0, the height of RemoteScreenSize()*0.024] into offset
+	put elementLocation + offset into moveToLocation	
+	
+	Click moveToLocation
+	typetext input
+	wait 2
+end text_entry_non_clear
+
+to search input -- SEARCH 
+	set global SR to global SR.("banner_pane")
+	------------------------------------------------------------
+	Run "Generic_functions/mobile_navigation".navigate ("icons/Search")
+	typetext input
+	wait 2
+	hideKeyboard
+	wait 1 
+end search
+
+to Side_Menu label,input --SIDE MENU SWIPING 
+	Run "Generic_functions/mobile_navigation".navigate (label)
+	wait 2
+	repeat until imagefound(1, text:input, ignoreSpaces:ON)
+		SwipeUp the remoteScreenSize times .3
+		wait 2
+	end repeat
+	wait 2
+	click foundimagelocation() 
+	wait 2
+	
+	put JsonFormat(the webdriver's capabilities) into capabilities
+	put jsonvalue(capabilities)."capabilities"."device" into device
+	
+	if device is equal to "iphone"
+		keyboard_close
+	end if
+end Side_Menu
+
+
+
+to Side_Menu_extended label,option,input --SIDE MENU WITH EXTENDED USER INPUT 
+	Run "Generic_functions/mobile_navigation".navigate (label)
+	
+	if option is not empty --HANDLES DEFAULT SCENAIRIO WITH NO REQUIREMENT 
+		Run "Generic_functions/mobile_navigation".navigate (option)
+		typetext (input)
+		wait 1
+	end if 
+	
+	Run "Generic_functions/mobile_navigation".navigate ("Done")
+end Side_Menu_extended
+
+to hideKeyboard --- SUB FUNCTIONS 
+	if ImageFound(0,text:"SPACE",SearchRectangle:[0,the height of RemoteScreenSize() * 0.9,the width of RemoteScreenSize(), the height of RemoteScreenSize()])
+		TypeText dismissButton
+		wait 0.5
+	end if
+	wait 0.5
+	set the SearchRectangle to empty
+end hideKeyboard
+
+to keyboard_close --JUST A TEST
+	if sutinfo().device_os is "Android" then
+		pressBackButton 
+	else
+		if imagefound(0,image: "icons/CloseKeyboard",searchRectangle:(global SR.("keyboard")))
+			tap foundimagelocation()
+			wait 1
+		end if
+	end if
+end keyboard_close
+
+to is_txt_box_empty IR 
+put IR.BottomLeft into BL 
+	put IR.BottomRight into BR
+	put IR.TopLeft into TL
+	put item 2 of BL - item 2 of TL into height 
+	put item 1 of BR - item 1 of BL into length 
+	set SR to (BL -(5,0),BR + (length * 1.3,height*3.6))
+	
+	if readText(SR, contrast:"On", contrastColor:"#000000", contrastTolerance:"88") is empty 
+		return IR.CenterLeft+(0,the height of RemoteScreenSize() * 0.024)
+	else
+		return SR.CenterRight
+	end if
+end is_txt_box_empty
+
+(*to clear_content label
+	put imageRectangle(text:label) into IR 
+	put IR.BottomLeft into BL 
+	put IR.BottomRight into BR
+	put IR.TopLeft into TL
+	put item 2 of BL - item 2 of TL into height 
+	put item 1 of BR - item 1 of BL into length 
+	set SR to [BL -[5,0],BR + [length * 0.9,height*3.6]]
+	put readtext(sr, contrast:"On", contrastColor:"#000000", contrastTolerance:"88") into textbox_content
+	set previous_capture to textbox_content
+	if textbox_content is not empty
+		repeat while true	
+			if repeatindex() is equal 1 then 	
+				click imageRectangle(text:textbox_content,searchRectangle:sr).CenterRight + (10,0)
+				wait 1.5
+			end if
+			typetext deletekey
+			wait 1.5
+			put readtext(sr, contrast:"On", contrastColor:"#000000", contrastTolerance:"88") into current_capture
+			wait 1.5
+			if previous_capture is equal to current_capture or current_capture is empty
+				Exit Repeat
+			end if
+			set previous_capture to current_capture
+		end repeat
+	end if
+end clear_content*)
+
+to clear_content label
+	"Generic_functions/mobile_navigation".navigate (label)
+	set the TextStyle to {contrast:"On",contrastColor:"#000000", contrastTolerance:"88",textDifference:1}
+	wait 1.5
+	put imageRectangle(text:label) into IR 
+	wait 1.5
+	put IR.BottomLeft + [0,1] into BL 
+	put IR.BottomRight + [0,1]  into BR
+	put IR.TopLeft into TL
+	put item 2 of BL - item 2 of TL into height 
+	put item 1 of RemoteScreenSize() into length
+	log Length
+	set SR to [BL -[5,0],BR + [length / 1.7,height*4.2]]
+	log SR
+	wait 0.5
+	put readtext(SR) into textbox_content
+	if textbox_content is empty 
+		set the TextStyle to "Default"
+		Exit handler
+	end if
+	set previous_capture to textbox_content
+	if textbox_content is not empty
+		repeat while true
+			if repeatindex() is equal 1 then       
+				click imageRectangle(text:textbox_content, SearchRectangle:SR).CenterRight + [10,0] 
+				wait 1.5
+			end if
+			KeyDown Backspace 
+			KeyDown Backspace 
+			wait 1.5
+			put readtext(SR) into current_capture
+			wait 1.5
+			if previous_capture is equal to current_capture or current_capture is empty
+				Exit Repeat
+			end if
+			set previous_capture to current_capture
+		end repeat
+	end if
+	set the TextStyle to "Default"
+end clear_content

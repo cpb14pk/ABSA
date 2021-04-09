@@ -1,0 +1,131 @@
+﻿// Use webdriver to move to elements directly
+
+// Returns the location of the object
+to _main obj
+	set the scriptlogging to false
+	put JsonFormat(the webdriver's capabilities) into capabilities
+	put jsonvalue(capabilities)."capabilities"."device" into device
+	if device is equal to "iphone"
+		logSuccess "Device type is" && device
+		findElement_iOS(obj)
+		elementLocation_iOS 
+	else
+		put jsonvalue(capabilities)."desired"."platformName" into device
+		logSuccess "Device type is" && device
+		findElement_Android (obj)
+		elementLocation_Android
+	end if
+	set the scriptlogging to true	
+end _main
+
+
+// Returns the web element of the object
+to findElementFunc obj
+	put JsonFormat(the webdriver's capabilities) into capabilities
+	put jsonvalue(capabilities)."capabilities"."device" into device
+	
+	if device is equal to "iphone"
+		findElement_iOS(obj)
+	else
+		put jsonvalue(capabilities)."desired"."platformName" into device
+		findElement_Android (obj)
+	end if
+end findElementFunc
+
+// Returns the web element location of the object provided you have found the element
+to findElementLocation
+	set the remoteWorkInterval to 0.2
+	put JsonFormat(the webdriver's capabilities) into capabilities
+	put jsonvalue(capabilities)."capabilities"."device" into device
+	
+	if device is equal to "iphone"
+		elementLocation_iOS 
+	else
+		put jsonvalue(capabilities)."desired"."platformName" into device
+		elementLocation_Android
+	end if
+end findElementLocation
+
+---------------------------------------iOS - ELEMENT LOCATION ---------------------------------------
+// Find the web element location using the global webElement variable. Set the global webElementCenter variable as the centre of the rectangle 
+
+to elementLocation_iOS
+	put global webElement.rectangle into webElementRect
+	put the center of webElementRect into global webElementCenter
+	return global webElementCenter
+end elementLocation_iOS
+
+---------------------------------------iOS -FIND ELEMENT----------------------------------------
+// Find the web element and set the global webElement variable 
+
+to findElement_iOS obj
+	put webdriver() into driver
+	
+	// Find by ID of header element
+	put (each item of findElements(webName: obj) whose text equals obj) into e
+	wait 1.5
+	
+	if e is empty
+		SwipeDown
+		wait 1.5
+		put (each item of findElements(webName: obj) whose text equals obj) into e
+	end if
+	
+	Repeat until e is not empty
+		put (each item of findElements(webName: obj) whose text equals obj) into e
+		Swipeup
+		wait 1
+		if repeatindex() > 5 
+			Log obj && "element not found"
+			exit repeat 
+		end if
+	End Repeat
+	
+	LogSuccess "Element Found" && e
+	set global webElement to e
+	return e
+end findElement_iOS
+
+--------------------------------------ANDROID - ELEMENT LOCATION ----------------------------------------------
+// Find the web element location using the global webElement variable. Set the global webElementCenter variable as the centre of the rectangle 
+
+to elementLocation_Android
+	put global webElement.rectangle into webElementRect		
+	put the center of webElementRect into global webElementCenter
+	log global webElementCenter
+	return global webElementCenter
+	
+end elementLocation_Android
+
+--------------------------------------ANDROID - FIND ELEMENT ----------------------------------------------
+// Find the web element and set the global webElement variable 
+
+to findElement_Android obj
+	put webdriver() into driver
+	Log "Locating element:" && obj 
+	
+	// Find by ID of header element
+	put (each item of findElements(webXpath:"//*[contains(@text, '"&obj&"')]") whose text equals obj) into e
+	wait 1.25
+	
+	if e is empty
+		SwipeDown
+		wait 1.25
+		put (each item of findElements(webXpath:"//*[contains(@text, '"&obj&"')]") whose text contains obj) into e
+	end if
+	
+	Repeat until e is not empty
+		put (each item of findElements(webXpath:"//*[contains(@text, '"&obj&"')]") whose text equals obj) into e
+		Swipeup
+		wait 1
+		if repeatindex() > 5 
+			Log obj && "element not found"
+			exit repeat 
+		end if
+		--put SS into the SwipeSpeed 
+	End Repeat
+	
+	LogSuccess "Element Found" && e
+	set global webElement to e
+	return e
+end findElement_Android
