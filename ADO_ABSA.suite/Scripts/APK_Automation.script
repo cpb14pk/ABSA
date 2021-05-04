@@ -1,0 +1,68 @@
+﻿to connect
+	// Connect the android device onto which you will install the APK 
+	Connect "Galaxy_S9"
+end connect
+
+log ConnectionInfo()
+
+to nav apk_location
+	LaunchApp "com.android.chrome"
+	wait 1
+	// Open a new tab 
+	Tap "Icons/Chrome_Menu"
+	Tap text: "New tab"
+	WaitFor 5, text: "Search"
+	Tap text: "Search"
+	wait 1
+	set the nextKeyDelay to 0.030
+	Typetext apk_location, returnKey
+end nav
+
+to download_apk apk_version
+	repeat until ImageFound(text:apk_version, waitFor:5)
+		SwipeUp
+	end repeat
+	
+	Tap text: apk_version
+	Tap text: "Download", caseSensitive: true
+	WaitFor 5, text: "Open"
+	tap text: "Open"
+	tap text: apk_version
+end download_apk
+
+download_apk "Android Banking App UAT-R"
+download_apk "Android Banking App UAT-I"
+download_apk "Android Banking App UAT backwards"
+
+to install_apk 
+	// Wait for app to install
+	WaitFor 60, text: "Install"
+	Tap text: "Install", caseSensitive: true
+	WaitFor 60, text: "Installing"
+	WaitFor 60, text: "App installed"
+	Click text: "Open"
+end install_apk
+
+to launch_app app
+	LaunchApp app
+end launch_app
+
+to verify_app
+	WaitFor 10, test: "Welcome to absa"
+end verify_app
+
+to close_app app
+	KillApp app
+end close_app
+
+set the nextKeyDelay to 0.030
+TypeText "https://github.com/cpb14pk/ABSA/tree/APK_Automation"
+TypeText returnKey
+
+nav "https://github.com/cpb14pk/ABSA/tree/APK_Automation"
+download_apk "waze"
+install_apk
+
+nav "https://install.appcenter.ms/orgs/Absa-Bank"
+
+"com.barclays.absa.banking.uat"
