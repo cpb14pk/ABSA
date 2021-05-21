@@ -1,0 +1,56 @@
+﻿to connect_device
+	// Connect the android device onto which you will install the APK 
+	Connect "iPhone SE"
+	wait 1
+end connect_device
+
+to nav app_center_location
+	LaunchApp "Safari"
+	wait 1
+	// Open a new tab 
+	Tap "Icons/Safari_Tabs"
+	Tap text: "+"
+	WaitFor 5, text: "Search"
+	Tap text: "Search"
+	wait 1
+	set the nextKeyDelay to 0.030
+	Typetext app_center_location, returnKey
+end nav
+
+to download_app app
+	repeat until ImageFound(text:app, waitFor:5)
+		SwipeUp
+	end repeat
+	
+	Tap text: app
+	Tap text: "DOWNLOAD", caseSensitive: true
+	WaitFor 30, "Icons/Downloads"
+	Tap "Icons/Downloads"
+	Tap text: app
+	
+	WaitFor 5, text: "Open"
+	tap text: "Open"
+	tap text: app
+end download_app
+
+to install_app 
+	// Wait for app to install
+	WaitFor 60, text: "Install"
+	Tap text: "Install", caseSensitive: true
+	WaitFor 60, text: "Installing"
+	WaitFor 60, text: "App installed"
+	Click text: "Open"
+end install_app
+
+to launch_app app
+	LaunchApp app
+end launch_app
+
+to verify_app
+	WaitFor 10, test: "Welcome to absa"
+end verify_app
+
+to close_app app
+	KillApp app
+end close_app
+
